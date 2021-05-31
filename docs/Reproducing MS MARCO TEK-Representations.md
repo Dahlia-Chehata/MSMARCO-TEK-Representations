@@ -105,4 +105,42 @@ done
 1. In the original settings suggested [here](https://arxiv.org/pdf/2004.12006.pdf), `train_batch_size` and `eval_batch_size` are both of 512 which causes OOM because of tensorflow inability to serve on multi-gpu models (**[Known Issue](https://github.com/tensorflow/serving/issues/311)** in tensorflow) . As a result, TPU is needed for larger batch sizes.
 2. Make sure that `max_predictions_per_seq` and `max_seq_length` have the same values in `create_pretraining_data.py` and `run_pretraining.py` to avoid this [issue](https://github.com/google-research/bert/issues/75).
 
-## QA Preprocessing
+## Query-Passage Preprocessing
+Convert MS MARCO Passage dataset to MRQA format
+```
+export mrqa_preprocessed=$data_dir/mrqa/msmarco_preprocessed
+
+python -m language.tek_representations.preprocess.msmarco_to_mrqa \
+--data_dir $data_dir/msmarco_linked_entities \
+--qrels $data_dir/msmarco_passage \
+--out_dir $mrqa_preprocessed
+```
+Preprocess data for both train and dev splits, and count the features to set the number of steps in the fine-tuning phase.
+```
+for model in $base_dir,base $large_dir,large;do \
+IFS=, read dir name <<< "$model"
+
+python -m language.tek_representations.preprocess.prepare_mrqa_data \
+--input_data_dir=$mrqa_preprocessed \
+--output_data_dir=$mrqa_preprocessed/$name/type.ngram-msl.512-mbg.128 \ 
+--vocab_file=$dir \
+--split=dev \
+--background_type=ngram \
+--corpus_file=$background_corpus \
+--is_training=False
+
+python -m language.tek_representations.preprocess.prepare_mrqa_data \
+--input_data_dir=$mrqa_preprocessed \ 
+--output_data_dir=$mrqa_preprocessed/$name/type.ngram-msl.512-mbg.128 \
+--vocab_file=$dir \
+--split=train \
+--background_type=ngram  \
+--corpus_file=$background_corpus \
+--is_training=True 
+
+python -m  language.tek_representations.preprocess.count_features \
+--output_file=$mrqa_preprocessed/$name/counts.txt \
+--preprocessed_dir=$mrqa_preprocessed/$name/type.ngram-msl.512-mbg.128 \
+done
+```
+## Fine-tuning
