@@ -115,7 +115,7 @@ python -m language.tek_representations.preprocess.msmarco_to_mrqa \
 --qrels $data_dir/msmarco_passage \
 --out_dir $mrqa_preprocessed
 ```
-Preprocess data for both train and dev splits, and count the features to set the number of steps in the fine-tuning phase.
+Preprocess data for both train and dev splits, and count the features to set the number of steps in the fine-tuning phase for roberta base and large.
 ```
 for model in $base_dir,base $large_dir,large;do \
 IFS=, read dir name <<< "$model"
@@ -144,3 +144,61 @@ python -m  language.tek_representations.preprocess.count_features \
 done
 ```
 ## Fine-tuning
+
+Train Roberta Base
+```
+python -m language.tek_representations.run_mrqa \
+--bert_config_file=$base_dir/config.json  \
+--datasets=base \
+--do_train \
+--do_predict \
+--learning_rate=1e-5  \
+--num_train_epochs=3 \
+--prefix=type.ngram-msl.512-mbg.128 \
+--eval_features_file=$mrqa_preprocessed/base/type.ngram-msl.512-mbg.128/dev.features* \
+--eval_tf_filename=$mrqa_preprocessed/base/type.ngram-msl.512-mbg.128/dev.tfrecord*  \
+--init_checkpoint=$base_dir/msl512_mbg128 \
+--metrics_file=$model_dir/finetuned/mrqa_base/seed-2.lr-1e-5.epochs-3.cp-msl512_mbg128.ds-all.preprocess-type.ngram-msl.512-mbg.128/_metrics.txt \
+--num_train_file=$mrqa_preprocessed/base/counts.txt* \
+--output_dir=$model_dir/finetuned/mrqa_base/seed-2.lr-1e-5.epochs-3.cp-msl512_mbg128.ds-all.preprocess-type.ngram-msl.512-mbg.128 \
+--output_prediction_file=$model_dir/finetuned/mrqa_base/seed-2.lr-1e-5.epochs-3.cp-msl512_mbg128.ds-all.preprocess-type.ngram-msl.512-mbg.128/_predictions.json \
+--predict_file=$mrqa_preprocessed/dev/ \
+--train_precomputed_file=$mrqa_preprocessed/base/type.ngram-msl.512-mbg.128/train.tfrecord* \
+--vocab_file=$base_dir \
+--train_batch_size=16 \
+--predict_batch_size=16 
+```
+
+Train Roberta Large
+```
+python -m language.tek_representations.run_mrqa \
+--bert_config_file=$large_dir/config.json  \
+--datasets=large \
+--do_train \
+--do_predict \
+--learning_rate=1e-5  \
+--num_train_epochs=3 \
+--prefix=type.ngram-msl.512-mbg.128 \
+--eval_features_file=$mrqa_preprocessed/large/type.ngram-msl.512-mbg.128/dev.features* \
+--eval_tf_filename=$mrqa_preprocessed/large/type.ngram-msl.512-mbg.128/dev.tfrecord*  \
+--init_checkpoint=$base_dir/msl512_mbg128 \
+--metrics_file=$model_dir/finetuned/mrqa_large/seed-2.lr-1e-5.epochs-3.cp-msl512_mbg128.ds-all.preprocess-type.ngram-msl.512-mbg.128/_metrics.txt \
+--num_train_file=$mrqa_preprocessed/large/counts.txt* \
+--output_dir=$model_dir/finetuned/mrqa_large/seed-2.lr-1e-5.epochs-3.cp-msl512_mbg128.ds-all.preprocess-type.ngram-msl.512-mbg.128 \
+--output_prediction_file=$model_dir/finetuned/mrqa_large/seed-2.lr-1e-5.epochs-3.cp-msl512_mbg128.ds-all.preprocess-type.ngram-msl.512-mbg.128/_predictions.json \
+--predict_file=$mrqa_preprocessed/dev/ \
+--train_precomputed_file=$mrqa_preprocessed/large/type.ngram-msl.512-mbg.128/train.tfrecord* \
+--vocab_file=$large_dir \
+--train_batch_size=4 \
+--predict_batch_size=4
+```
+Evaluate on test set
+
+## Results
+
+|                     | Base| Large|
+|---------------------| ----| ---|
+| RoBERTa             |      |    |              
+| RoBERTa++           |      |    |
+| TEK <sub> F </sub>  |      |    |
+| TEK <sub> PF </sub> |      |    |
