@@ -181,7 +181,7 @@ python -m language.tek_representations.run_mrqa \
 --prefix=type.ngram-msl.512-mbg.128 \
 --eval_features_file=$mrqa_preprocessed/large/type.ngram-msl.512-mbg.128/dev.features* \
 --eval_tf_filename=$mrqa_preprocessed/large/type.ngram-msl.512-mbg.128/dev.tfrecord*  \
---init_checkpoint=$base_dir/msl512_mbg128 \
+--init_checkpoint=$large_dir/msl512_mbg128 \
 --metrics_file=$model_dir/finetuned/mrqa_large/seed-2.lr-1e-5.epochs-3.cp-msl512_mbg128.ds-all.preprocess-type.ngram-msl.512-mbg.128/_metrics.txt \
 --num_train_file=$mrqa_preprocessed/large/counts.txt* \
 --output_dir=$model_dir/finetuned/mrqa_large/seed-2.lr-1e-5.epochs-3.cp-msl512_mbg128.ds-all.preprocess-type.ngram-msl.512-mbg.128 \
