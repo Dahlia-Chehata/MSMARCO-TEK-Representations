@@ -65,16 +65,17 @@ python -m language.tek_representations.reformat_input --data_dir $input dir --ou
 ```
 ## Pretraining
 ```
-export pretraining_files=$out_dir/wiki.tfrecord
+export pretraining_files=$out_dir/wiki_tfrecords/
 export background_corpus=$out_dir/background_corpus.json
 export input=$(find $out_dir -type f -name '*linked_entities.json' | tr '\n' ',' | sed 's/,$/ /' | tr ' ' '\n')
 ```
 Create pretraining data if key-value store is available
 ```
-for dir in $base_dir $large_dir;do
+for model in $base_dir,base $large_dir,large;do
+IFS=, read dir name <<< "$model"
 python -m language.tek_representations.preprocess.create_pretraining_data \
 --input_file=$input \
---output_file=$pretraining_files \
+--output_file=$pretraining_files/$name/wiki.tfrecord \
 --background_corpus_file=$background_corpus \
 --vocab_file=$dir \
 --max_seq_length=512 \
@@ -84,14 +85,14 @@ done
 To run pretraining, enable `use_tpu` if tpu is available. If multiple gpus are used,
 enable `use_gpu` and set `num_gpu_cores`.
 ```
-for model in $base_dir,roberta_base.ckpt $large_dir,roberta_large.ckpt;do
-IFS=, read dir ckpt <<< '$model'
+for model in $base_dir,roberta_base.ckpt,base $large_dir,roberta_large.ckpt,large;do
+IFS=, read dir ckpt name <<< '$model'
 python -m language.tek_representations.run_pretraining \
 --do_train \
 --do_eval \
 --bert_config_file=$dir/config.json \
 --init_checkpoint=$dir/ckpts/$ckpt \
---input_file=$pretraining_files \
+--input_file=$pretraining_files/$name/wiki.tfrecord \
 --output_dir=$dir/msl512_mbg128 \
 --train_batch_size=8 \
 --eval_batch_size=8 \
